@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
-"""Build the Gold Coast suburb-age dataset.
+"""Build the Gold Coast suburb-development dataset.
 
-Joins gazetted Queensland locality boundaries to the curated development-era
-table in ``data/suburb-eras.csv`` and writes:
+Joins gazetted locality boundaries to the dated development table in
+``data/suburb-development.csv`` and writes:
 
   data/gold-coast-eras.geojson   the portable data artifact
   data/gold-coast-eras.js        the same payload as ``window.GC_DATA``, so
                                  index.html works from a file:// URL
 
+Each locality carries four facts rather than a single era band: the year it was
+first settled, the year its present urban development began, the year it was
+substantially built out, and how confident that dating is. A locality that was
+never urbanised has no development window at all.
+
 Boundaries come from the Queensland locality set published in
 https://github.com/tonywr71/GeoJson-Data (derived from the Queensland
-Government / Geoscape administrative boundaries). Run with --fetch to clone it
-into a cache directory, or point --source at an existing copy.
+Government / Geoscape administrative boundaries). Run with --fetch to clone it,
+or point --source at an existing copy.
+
+ABS SAL boundaries, which clip to the coastline instead of running out over the
+water, can be used instead by passing --abs path/to/suburb2021.rda (from the
+absmapsdata R package); see scripts/read_rdata_sf.py.
 
 Usage:
     python3 scripts/build_data.py --fetch
@@ -25,12 +34,13 @@ import csv
 import json
 import math
 import pathlib
+import re
 import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LOCALITIES = ROOT / "scripts" / "localities.txt"
-ERAS = ROOT / "data" / "suburb-eras.csv"
+DEV_TABLE = ROOT / "data" / "suburb-development.csv"
 OUT_GEOJSON = ROOT / "data" / "gold-coast-eras.geojson"
 OUT_JS = ROOT / "data" / "gold-coast-eras.js"
 
@@ -43,57 +53,20 @@ NAME_FIELD = "qld_loca_2"
 # Georgetown), so names alone are not a safe selector.
 REGION = (152.95, -28.45, 153.65, -27.60)  # minx, miny, maxx, maxy
 
-# Ordered oldest -> newest. Kept in one place so the map, the legend and the
-# timeline all agree on the order.
-ERA_ORDER = [
-    "pre1900",
-    "1900-1945",
-    "1946-1969",
-    "1970s",
-    "1980s",
-    "1990s-2000s",
-    "2010s+",
-    "rural",
-]
+# The year the scale and the timeline start from, and the year they end at.
+YEAR_MIN = 1865
+YEAR_MAX = 2025
 
-# The year each band is treated as "arrived" by the timeline scrubber.
-ERA_START = {
-    "pre1900": 1865,
-    "1900-1945": 1920,
-    "1946-1969": 1950,
-    "1970s": 1970,
-    "1980s": 1980,
-    "1990s-2000s": 1990,
-    "2010s+": 2010,
-    "rural": None,
-}
-
-ERA_LABEL = {
-    "pre1900": "Before 1900",
-    "1900-1945": "1900–1945",
-    "1946-1969": "1946–1969",
-    "1970s": "1970s",
-    "1980s": "1980s",
-    "1990s-2000s": "1990s–2000s",
-    "2010s+": "2010s onward",
-    "rural": "Rural / never urbanised",
-}
-
-ERA_BLURB = {
-    "pre1900": "Colonial townships — surveyed river ports and beach villages.",
-    "1900-1945": "The railway and the first beach subdivisions.",
-    "1946-1969": "Canal estates and the post-war tourist boom.",
-    "1970s": "The canal frontier pushes inland.",
-    "1980s": "Master-planned communities.",
-    "1990s-2000s": "The northern corridor opens up.",
-    "2010s+": "The current growth front.",
-    "rural": "Farmland, forest and national park — never built out.",
+CONFIDENCE = {
+    "high": "Well documented — a survey, a subdivision or an opening date.",
+    "medium": "The decade is solid; the exact years are an estimate.",
+    "low": "Approximate. Acreage released gradually, with no single date.",
 }
 
 
 def ring_points(geom):
     if geom["type"] == "Polygon":
-        return [r for r in geom["coordinates"]]
+        return list(geom["coordinates"])
     return [r for poly in geom["coordinates"] for r in poly]
 
 
@@ -115,8 +88,7 @@ def geom_area_km2(geom):
         for i, ring in enumerate(poly):
             lat = sum(p[1] for p in ring) / len(ring)
             kx = 111.320 * math.cos(math.radians(lat))
-            ky = 110.574
-            a = abs(ring_area(ring)) * kx * ky
+            a = abs(ring_area(ring)) * kx * 110.574
             total += a if i == 0 else -a
     return total
 
@@ -142,32 +114,6 @@ def largest_ring(geom):
         if a > best_a:
             best, best_a = poly[0], a
     return best
-
-
-def label_point(geom):
-    """A point inside the suburb, biased toward the middle of its widest part.
-
-    Grid-samples the largest ring's bounding box and keeps the interior point
-    furthest from the edge, so labels avoid narrow necks and coastal slivers.
-    """
-    ring = largest_ring(geom)
-    xs = [p[0] for p in ring]
-    ys = [p[1] for p in ring]
-    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
-    best, best_d = None, -1.0
-    steps = 24
-    for i in range(1, steps):
-        for j in range(1, steps):
-            px = minx + (maxx - minx) * i / steps
-            py = miny + (maxy - miny) * j / steps
-            if not point_in_ring(px, py, ring):
-                continue
-            d = min_edge_distance(px, py, ring)
-            if d > best_d:
-                best, best_d = (px, py), d
-    if best is None:
-        return [round(sum(xs) / len(xs), 5), round(sum(ys) / len(ys), 5)]
-    return [round(best[0], 5), round(best[1], 5)]
 
 
 def point_in_ring(px, py, ring):
@@ -197,10 +143,35 @@ def min_edge_distance(px, py, ring):
     return best
 
 
+def label_point(geom):
+    """A point inside the suburb, biased toward the middle of its widest part.
+
+    Grid-samples the largest ring's bounding box and keeps the interior point
+    furthest from the edge, so labels avoid narrow necks and coastal slivers.
+    """
+    ring = largest_ring(geom)
+    xs = [p[0] for p in ring]
+    ys = [p[1] for p in ring]
+    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+    best, best_d = None, -1.0
+    steps = 24
+    for i in range(1, steps):
+        for j in range(1, steps):
+            pxx = minx + (maxx - minx) * i / steps
+            pyy = miny + (maxy - miny) * j / steps
+            if not point_in_ring(pxx, pyy, ring):
+                continue
+            d = min_edge_distance(pxx, pyy, ring)
+            if d > best_d:
+                best, best_d = (pxx, pyy), d
+    if best is None:
+        return [round(sum(xs) / len(xs), 5), round(sum(ys) / len(ys), 5)]
+    return [round(best[0], 5), round(best[1], 5)]
+
+
 def round_geom(geom, nd=5):
     def rr(ring):
         out = [[round(p[0], nd), round(p[1], nd)] for p in ring]
-        # drop consecutive duplicates introduced by rounding
         dedup = [out[0]]
         for p in out[1:]:
             if p != dedup[-1]:
@@ -211,10 +182,8 @@ def round_geom(geom, nd=5):
 
     if geom["type"] == "Polygon":
         return {"type": "Polygon", "coordinates": [rr(r) for r in geom["coordinates"]]}
-    return {
-        "type": "MultiPolygon",
-        "coordinates": [[rr(r) for r in poly] for poly in geom["coordinates"]],
-    }
+    return {"type": "MultiPolygon",
+            "coordinates": [[rr(r) for r in poly] for poly in geom["coordinates"]]}
 
 
 def resolve_source(args) -> pathlib.Path:
@@ -225,112 +194,183 @@ def resolve_source(args) -> pathlib.Path:
     if target.exists():
         return target
     if not args.fetch:
-        sys.exit(
-            f"No source boundaries found at {target}.\n"
-            f"Re-run with --fetch to clone {SOURCE_REPO}, or pass --source."
-        )
+        sys.exit(f"No source boundaries found at {target}.\n"
+                 f"Re-run with --fetch to clone {SOURCE_REPO}, or pass --source.")
     cache.parent.mkdir(parents=True, exist_ok=True)
     if not (cache / ".git").exists():
         print(f"cloning {SOURCE_REPO} -> {cache}")
-        subprocess.run(
-            ["git", "clone", "--depth", "1", SOURCE_REPO, str(cache)], check=True
-        )
+        subprocess.run(["git", "clone", "--depth", "1", SOURCE_REPO, str(cache)], check=True)
     return target
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--source", help="path to a Queensland locality GeoJSON")
-    ap.add_argument("--fetch", action="store_true", help="clone the source repo if missing")
-    ap.add_argument("--cache", default=str(ROOT / ".cache" / "qld-boundaries"))
-    args = ap.parse_args()
+def load_boundaries(args, wanted):
+    """Return {LOCALITY NAME: geometry} for the localities we want."""
+    if args.abs:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from read_rdata_sf import RDataReader, sfg_to_geojson
+        import bz2, gzip, lzma, struct
 
-    wanted = [ln.strip() for ln in LOCALITIES.read_text().splitlines() if ln.strip()]
-    eras = {r["locality"]: r for r in csv.DictReader(ERAS.open())}
+        blob = pathlib.Path(args.abs).read_bytes()
+        if blob[:2] == b"\x1f\x8b":
+            buf = gzip.decompress(blob)
+        elif blob[:3] == b"BZh":
+            buf = bz2.decompress(blob)
+        elif blob[:6] == b"\xfd7zXZ\x00":
+            buf = lzma.decompress(blob)
+        else:
+            buf = blob
 
-    missing = [w for w in wanted if w not in eras]
-    if missing:
-        sys.exit(f"localities with no era assigned: {missing}")
-    extra = [k for k in eras if k not in wanted]
-    if extra:
-        sys.exit(f"era rows that are not Gold Coast localities: {extra}")
+        r = RDataReader(buf)
+        r.header()
+        flags = r.i32()
+        if (flags >> 9) & 1:
+            r.read(False)
+        if (flags >> 10) & 1:
+            r.read()
+        r.i32()
+        ncol = r.length()
+        cols = []
+        while len(cols) < ncol:
+            if (struct.unpack_from(">i", r.b, r.i)[0] & 0xFF) == 19:
+                break
+            cols.append(r.read(True))
+        names, states = cols[0], cols[3]
+        # ABS disambiguates repeated names: "Southport (Qld)", "Gilberton (Gold Coast - Qld)"
+        strip = re.compile(r"\s*\([^)]*\)\s*$")
+        norm = [strip.sub("", n).strip().upper() if n else "" for n in names]
+        keep = [norm[i] in wanted and states[i] == "Queensland" for i in range(len(names))]
+        geoms = r.read_sfc(keep)
+        out = {}
+        for i, k in enumerate(keep):
+            if not k:
+                continue
+            gj = sfg_to_geojson(geoms[i])
+            if gj is None:
+                continue
+            if norm[i] in out:
+                sys.exit(f"{norm[i]} matched more than one ABS row")
+            out[norm[i]] = gj
+        return out
 
     src = resolve_source(args)
     print(f"reading {src}")
     raw = json.loads(src.read_text())
-
-    picked = {}
+    out = {}
     for f in raw["features"]:
         geom = f.get("geometry")
         props = f.get("properties", {})
         if not geom or props.get("dt_retire"):
             continue
         name = (props.get(NAME_FIELD) or "").strip().upper()
-        if name not in eras or not in_region(geom):
+        if name not in wanted or not in_region(geom):
             continue
-        if name in picked:
+        if name in out:
             sys.exit(f"{name} matched more than one polygon inside the region")
-        picked[name] = geom
+        out[name] = geom
+    return out
 
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--source", help="path to a Queensland locality GeoJSON")
+    ap.add_argument("--abs", help="path to an absmapsdata suburb20XX.rda instead")
+    ap.add_argument("--fetch", action="store_true", help="clone the source repo if missing")
+    ap.add_argument("--cache", default=str(ROOT / ".cache" / "qld-boundaries"))
+    args = ap.parse_args()
+
+    wanted = [ln.strip() for ln in LOCALITIES.read_text().splitlines() if ln.strip()]
+    rows = {r["locality"]: r for r in csv.DictReader(DEV_TABLE.open())}
+
+    missing = [w for w in wanted if w not in rows]
+    if missing:
+        sys.exit(f"localities with no development row: {missing}")
+    extra = [k for k in rows if k not in wanted]
+    if extra:
+        sys.exit(f"development rows that are not Gold Coast localities: {extra}")
+
+    picked = load_boundaries(args, set(wanted))
     absent = [w for w in wanted if w not in picked]
     if absent:
         sys.exit(f"no boundary found for: {absent}")
 
     features = []
     for name in wanted:
-        geom = picked[name]
-        row = eras[name]
-        era = row["era"]
-        if era not in ERA_ORDER:
-            sys.exit(f"{name}: unknown era {era!r}")
-        features.append(
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": name.title()
-                    .replace("'S", "'s")
-                    .replace(" Bc", " BC"),
-                    "era": era,
-                    "eraLabel": ERA_LABEL[era],
-                    "eraStart": ERA_START[era],
-                    "settled": int(row["settled"]),
-                    "note": row["note"],
-                    "areaKm2": round(geom_area_km2(geom), 1),
-                    "label": label_point(geom),
-                },
-                "geometry": round_geom(geom),
-            }
-        )
+        row = rows[name]
+        founded = int(row["founded"])
+        start = int(row["start"]) if row["start"] else None
+        end = int(row["end"]) if row["end"] else None
+        conf = row["confidence"]
 
+        if conf not in CONFIDENCE:
+            sys.exit(f"{name}: unknown confidence {conf!r}")
+        if start is None and end is not None:
+            sys.exit(f"{name}: has a completion year but no start year")
+        if start is not None and start < founded:
+            sys.exit(f"{name}: development starts before it was settled")
+        if end is not None and end < start:
+            sys.exit(f"{name}: finished building before it started")
+        if not (YEAR_MIN <= founded <= YEAR_MAX):
+            sys.exit(f"{name}: founded {founded} is outside {YEAR_MIN}-{YEAR_MAX}")
+
+        # For an unfinished suburb the window runs to the present day.
+        closed = end if end is not None else YEAR_MAX
+        mid = (start + closed) // 2 if start is not None else None
+
+        geom = picked[name]
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "name": name.title(),
+                "founded": founded,
+                "start": start,
+                "end": end,
+                "mid": mid,
+                "years": (closed - start) if start is not None else None,
+                "ongoing": start is not None and end is None,
+                "rural": start is None,
+                "confidence": conf,
+                "note": row["note"],
+                "areaKm2": round(geom_area_km2(geom), 1),
+                "label": label_point(geom),
+            },
+            "geometry": round_geom(geom),
+        })
+
+    urban = [f for f in features if not f["properties"]["rural"]]
     fc = {
         "type": "FeatureCollection",
-        "name": "City of Gold Coast — suburbs by era of development",
+        "name": "City of Gold Coast — suburbs by date of development",
         "meta": {
-            "boundaries": "Queensland gazetted localities (Queensland Government / "
-            "Geoscape administrative boundaries) via " + SOURCE_REPO,
-            "eras": "Curated in data/suburb-eras.csv — editorial, not an official dataset.",
-            "eraOrder": ERA_ORDER,
-            "eraLabels": ERA_LABEL,
-            "eraBlurbs": ERA_BLURB,
-            "eraStart": ERA_START,
+            "boundaries": ("ABS SAL (absmapsdata)" if args.abs else
+                           "Queensland gazetted localities (Queensland Government / "
+                           "Geoscape administrative boundaries) via " + SOURCE_REPO),
+            "dates": "Curated in data/suburb-development.csv — editorial, not an official dataset.",
+            "yearMin": YEAR_MIN,
+            "yearMax": YEAR_MAX,
+            "confidence": CONFIDENCE,
             "localityCount": len(features),
+            "urbanCount": len(urban),
         },
         "features": features,
     }
 
     OUT_GEOJSON.write_text(json.dumps(fc, separators=(",", ":")) + "\n")
-    OUT_JS.write_text(
-        "/* Generated by scripts/build_data.py - do not edit by hand. */\n"
-        "window.GC_DATA = " + json.dumps(fc, separators=(",", ":")) + ";\n"
-    )
+    OUT_JS.write_text("/* Generated by scripts/build_data.py - do not edit by hand. */\n"
+                      "window.GC_DATA = " + json.dumps(fc, separators=(",", ":")) + ";\n")
 
-    counts = {}
-    for f in features:
-        counts[f["properties"]["era"]] = counts.get(f["properties"]["era"], 0) + 1
+    starts = sorted(f["properties"]["start"] for f in urban)
+    spans = sorted(f["properties"]["years"] for f in urban)
     print(f"wrote {len(features)} localities -> {OUT_GEOJSON.name} "
           f"({OUT_GEOJSON.stat().st_size / 1024:.0f} KB), {OUT_JS.name}")
-    for e in ERA_ORDER:
-        print(f"  {ERA_LABEL[e]:<26} {counts.get(e, 0):>3}")
+    print(f"  urban {len(urban)}, rural {len(features) - len(urban)}")
+    print(f"  development starts {starts[0]}–{starts[-1]}, median {starts[len(starts) // 2]}")
+    print(f"  build-out length {spans[0]}–{spans[-1]} years, median {spans[len(spans) // 2]}")
+    by_decade = {}
+    for f in urban:
+        d = f["properties"]["start"] // 10 * 10
+        by_decade[d] = by_decade.get(d, 0) + 1
+    for d in sorted(by_decade):
+        print(f"    {d}s  {'█' * by_decade[d]} {by_decade[d]}")
 
 
 if __name__ == "__main__":

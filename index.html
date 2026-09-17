@@ -20,20 +20,13 @@
   --accent-soft:  rgba(184,73,28,.12);
   --shadow:       0 1px 2px rgba(26,24,21,.06), 0 8px 24px -12px rgba(26,24,21,.18);
 
-  /* Sequential ramp, oldest -> newest. Blue single-hue ramp, steps 700..100,
-     validated for lightness monotonicity and adjacent step gaps. */
-  --era-1: #0d366b;   /* before 1900   */
-  --era-2: #184f95;   /* 1900-1945     */
-  --era-3: #256abf;   /* 1946-1969     */
-  --era-4: #3987e5;   /* 1970s         */
-  --era-5: #6da7ec;   /* 1980s         */
-  --era-6: #9ec5f4;   /* 1990s-2000s   */
-  --era-7: #cde2fb;   /* 2010s onward  */
-  --era-r: #a8a79c;   /* off-scale: never urbanised */
+  /* Off the year scale: never urbanised. Chosen to clear the perceptual
+     separation floor against the palest end of the blue ramp. */
+  --rural:        #a8a79c;
 
   --stroke-map:   rgba(26,24,21,.34);
   --stroke-halo:  #cfc9b8;
-  --pending:      rgba(26,24,21,.16);
+  --pending:      rgba(26,24,21,.18);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -49,19 +42,10 @@
     --accent:       #e07a4e;
     --accent-soft:  rgba(224,122,78,.16);
     --shadow:       0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.8);
-
-    --era-1: #cde2fb;
-    --era-2: #9ec5f4;
-    --era-3: #6da7ec;
-    --era-4: #3987e5;
-    --era-5: #256abf;
-    --era-6: #184f95;
-    --era-7: #0d366b;
-    --era-r: #5c5b54;
-
-    --stroke-map:  rgba(246,243,236,.28);
-    --stroke-halo: #3a3833;
-    --pending:     rgba(246,243,236,.16);
+    --rural:        #5c5b54;
+    --stroke-map:   rgba(246,243,236,.28);
+    --stroke-halo:  #3a3833;
+    --pending:      rgba(246,243,236,.18);
   }
 }
 :root[data-theme="dark"]{
@@ -77,19 +61,10 @@
   --accent:       #e07a4e;
   --accent-soft:  rgba(224,122,78,.16);
   --shadow:       0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.8);
-
-  --era-1: #cde2fb;
-  --era-2: #9ec5f4;
-  --era-3: #6da7ec;
-  --era-4: #3987e5;
-  --era-5: #256abf;
-  --era-6: #184f95;
-  --era-7: #0d366b;
-  --era-r: #5c5b54;
-
-  --stroke-map:  rgba(246,243,236,.28);
-  --stroke-halo: #3a3833;
-  --pending:     rgba(246,243,236,.16);
+  --rural:        #5c5b54;
+  --stroke-map:   rgba(246,243,236,.28);
+  --stroke-halo:  #3a3833;
+  --pending:      rgba(246,243,236,.18);
 }
 
 *{ box-sizing: border-box; }
@@ -105,198 +80,111 @@ body{
 }
 button, input, select{ font: inherit; color: inherit; }
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.mono{ font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- shell */
-.app{
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
+.app{ display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
 .topbar{
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
   padding: 14px 20px 12px;
   border-bottom: 1px solid var(--rule);
   background: var(--surface);
 }
 .wordmark{
   font-family: Archivo, ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 19px;
-  letter-spacing: -.015em;
-  margin: 0;
-  text-wrap: balance;
+  font-weight: 700; font-size: 19px; letter-spacing: -.015em;
+  margin: 0; text-wrap: balance;
 }
-.standfirst{
-  color: var(--ink-2);
-  font-size: 13px;
-  margin: 0;
-  max-width: 62ch;
-  flex: 1 1 320px;
-}
+.standfirst{ color: var(--ink-2); font-size: 13px; margin: 0; max-width: 64ch; flex: 1 1 320px; }
 .topbar-tools{ display: flex; gap: 8px; align-items: center; margin-left: auto; }
 
 .btn{
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 5px 11px;
-  cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-2);
-  white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 5px 11px; cursor: pointer; font-size: 12.5px; font-weight: 500;
+  color: var(--ink-2); white-space: nowrap;
 }
 .btn:hover{ border-color: var(--ink-3); color: var(--ink); }
-.btn[aria-pressed="true"]{
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-}
+.btn[aria-pressed="true"]{ background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
-.body{
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  gap: 0;
-}
+.body{ display: flex; flex: 1 1 auto; min-height: 0; }
 
 /* ---------------------------------------------------------------- map */
 .stage{
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-sunk);
+  position: relative; flex: 1 1 auto; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; background: var(--surface-sunk);
 }
-.canvas-wrap{
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  touch-action: none;
-}
-#map{
-  display: block;
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-}
+.canvas-wrap{ position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; touch-action: none; }
+#map{ display: block; width: 100%; height: 100%; cursor: grab; }
 #map.dragging{ cursor: grabbing; }
 
 .sub{
-  fill: var(--fill, var(--era-r));
-  stroke: var(--stroke-map);
-  stroke-width: .6;
-  stroke-linejoin: round;
+  stroke: var(--stroke-map); stroke-width: .6; stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  transition: fill .18s ease, opacity .18s ease;
+  transition: fill-opacity .2s ease, opacity .18s ease;
 }
 @media (prefers-reduced-motion: reduce){ .sub{ transition: none; } }
 .sub:hover{ stroke: var(--ink); stroke-width: 1.6; }
-.sub.is-pending{ fill: transparent; stroke: var(--pending); stroke-width: .7; stroke-dasharray: 2 2.5; }
-.sub.is-muted{ opacity: .18; }
-.sub.is-selected{ stroke: var(--accent); stroke-width: 2.4; }
+/* a suburb that has not been started yet at the chosen year */
+.sub.is-unbuilt{ fill: transparent !important; stroke: var(--pending); stroke-width: .7; stroke-dasharray: 2 2.5; }
+/* under construction: part-filled, with a dashed edge until it is finished */
+.sub.is-building{ stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 2; }
+.sub.is-muted{ opacity: .16; }
+.sub.is-selected{ stroke: var(--accent); stroke-width: 2.4; stroke-dasharray: none; }
 
 .halo{ fill: none; stroke: var(--stroke-halo); stroke-width: 7; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 
 .lbl{
-  font-family: "IBM Plex Sans", sans-serif;
-  font-weight: 500;
-  fill: var(--ink);
-  paint-order: stroke fill;
-  stroke: var(--surface);
-  stroke-width: 2.6px;
-  stroke-linejoin: round;
-  text-anchor: middle;
-  pointer-events: none;
+  font-family: "IBM Plex Sans", sans-serif; font-weight: 500;
+  fill: var(--ink); paint-order: stroke fill;
+  stroke: var(--surface); stroke-width: 2.6px; stroke-linejoin: round;
+  text-anchor: middle; pointer-events: none;
 }
 
-.map-overlay{
-  position: absolute;
-  top: 12px; left: 12px;
-  display: flex; flex-direction: column; gap: 8px;
-  pointer-events: none;
-}
+.map-overlay{ position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .map-overlay > *{ pointer-events: auto; }
 .zoomers{ display: flex; gap: 4px; }
-.zoomers .btn{ width: 30px; padding: 4px 0; text-align: center; background: var(--surface); }
-
+.zoomers .btn{ width: 30px; padding: 4px 0; text-align: center; }
 .scalebar{
   display: flex; align-items: center; gap: 7px;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 10.5px; color: var(--ink-2);
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--ink-2);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
-  border: 1px solid var(--rule); border-radius: 5px;
-  padding: 3px 7px;
+  border: 1px solid var(--rule); border-radius: 5px; padding: 3px 7px;
 }
 .scalebar i{ display: block; height: 5px; border: 1px solid var(--ink-2); border-top: 0; }
 
 .tip{
-  position: absolute;
-  z-index: 5;
-  pointer-events: none;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 7px;
-  box-shadow: var(--shadow);
-  padding: 8px 10px;
-  min-width: 156px;
-  max-width: 240px;
+  position: absolute; z-index: 5; pointer-events: none;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 7px;
+  box-shadow: var(--shadow); padding: 9px 11px; min-width: 186px; max-width: 262px;
 }
 .tip[hidden]{ display: none !important; }
-.tip b{
-  font-family: Archivo, sans-serif; font-weight: 600; font-size: 13px;
-  display: block; letter-spacing: -.01em;
-}
-.tip .tip-era{ display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; color: var(--ink-2); }
-.tip .tip-meta{
-  margin-top: 4px; font-family: "IBM Plex Mono", monospace; font-size: 11px;
-  color: var(--ink-3); font-variant-numeric: tabular-nums;
-}
-.dot{ width: 9px; height: 9px; border-radius: 2px; flex: none; border: 1px solid rgba(0,0,0,.18); }
+.tip b{ font-family: Archivo, sans-serif; font-weight: 600; font-size: 13.5px; display: block; letter-spacing: -.01em; }
+.tip .row{ display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--ink-2); }
+.tip .meta{ margin-top: 5px; font-size: 11px; color: var(--ink-3); }
+.dot{ width: 9px; height: 9px; border-radius: 2px; flex: none; border: 1px solid rgba(128,128,128,.4); }
 
 /* ---------------------------------------------------------------- timeline */
 .timeline{
-  border-top: 1px solid var(--rule);
-  background: var(--surface);
-  padding: 10px 18px 12px;
-  display: flex; flex-direction: column; gap: 6px;
+  border-top: 1px solid var(--rule); background: var(--surface);
+  padding: 10px 18px 12px; display: flex; flex-direction: column; gap: 6px;
 }
 .tl-head{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.tl-year{
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 23px; font-weight: 500; letter-spacing: -.02em;
-  font-variant-numeric: tabular-nums;
-  min-width: 4.3ch;
-}
-.tl-note{ color: var(--ink-2); font-size: 12.5px; flex: 1 1 200px; }
+.tl-year{ font-family: "IBM Plex Mono", monospace; font-size: 23px; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; min-width: 4.3ch; }
+.tl-note{ color: var(--ink-2); font-size: 12.5px; flex: 1 1 220px; }
 .tl-note b{ color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tl-note .building{ color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-input[type=range]{
-  -webkit-appearance: none; appearance: none;
-  width: 100%; background: transparent; margin: 0; cursor: pointer;
-}
-input[type=range]::-webkit-slider-runnable-track{
-  height: 4px; border-radius: 2px; background: var(--rule);
-}
+input[type=range]{ -webkit-appearance: none; appearance: none; width: 100%; background: transparent; margin: 0; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track{ height: 4px; border-radius: 2px; background: var(--rule); }
 input[type=range]::-moz-range-track{ height: 4px; border-radius: 2px; background: var(--rule); }
 input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance: none; appearance: none;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--accent); border: 2px solid var(--surface);
-  margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--surface); margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,.3);
 }
 input[type=range]::-moz-range-thumb{
   width: 14px; height: 14px; border-radius: 50%;
-  background: var(--accent); border: 2px solid var(--surface);
-  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  background: var(--accent); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.3);
 }
 
 .ticks{ position: relative; height: 30px; margin-top: 1px; }
@@ -313,66 +201,79 @@ input[type=range]::-moz-range-thumb{
 
 /* ---------------------------------------------------------------- rail */
 .rail{
-  flex: 0 0 322px;
-  border-left: 1px solid var(--rule);
-  background: var(--surface);
-  overflow-y: auto;
-  padding: 16px 18px 28px;
+  flex: 0 0 334px; border-left: 1px solid var(--rule); background: var(--surface);
+  overflow-y: auto; padding: 16px 18px 28px;
   display: flex; flex-direction: column; gap: 18px;
 }
 .rail h2{
   font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600;
-  letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
-  margin: 0 0 9px;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 9px;
 }
+.rail h2 .hint{ text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink-3); }
 
-.search{
-  width: 100%; padding: 7px 10px;
-  border: 1px solid var(--rule); border-radius: 6px;
-  background: var(--plane);
-}
+.search{ width: 100%; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--plane); }
 .search::placeholder{ color: var(--ink-3); }
 
-/* legend doubles as the distribution chart: bar length = locality count */
-.legend{ display: flex; flex-direction: column; gap: 1px; }
-.lg{
-  display: grid;
-  grid-template-columns: 11px 1fr auto;
-  align-items: center; gap: 9px;
-  padding: 5px 6px; border-radius: 5px;
-  background: none; border: 0; text-align: left; cursor: pointer; width: 100%;
+.mode{ display: flex; gap: 6px; margin-bottom: 10px; }
+.mode .btn{ flex: 1 1 0; text-align: center; font-size: 12px; padding: 4px 6px; }
+
+/* the year scale, and under it the decade histogram of development starts */
+.scale-bar{ width: 100%; height: 11px; border-radius: 3px; display: block; }
+.scale-axis{ display: flex; justify-content: space-between; margin-top: 3px; font-size: 10px; color: var(--ink-3); }
+.hist{ display: flex; align-items: flex-end; gap: 2px; height: 58px; margin-top: 12px; }
+.hbar{
+  flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: center; gap: 2px; background: none; border: 0; padding: 0; cursor: pointer;
+  border-radius: 3px 3px 0 0;
 }
-.lg:hover{ background: var(--rule-soft); }
-.lg[aria-pressed="true"]{ background: var(--accent-soft); }
-.lg .sw{ width: 11px; height: 11px; border-radius: 2px; border: 1px solid rgba(0,0,0,.2); }
-.lg .nm{ font-size: 12.5px; color: var(--ink); line-height: 1.25; }
-.lg .bar{ display: block; height: 3px; border-radius: 2px; margin-top: 4px; min-width: 2px; }
-.lg .ct{
-  font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
-  color: var(--ink-2); font-variant-numeric: tabular-nums;
+.hbar:hover .hfill, .hbar[aria-pressed="true"] .hfill{ outline: 2px solid var(--accent); outline-offset: 1px; }
+.hbar .hn{ font-size: 9.5px; color: var(--ink-3); font-family: "IBM Plex Mono", monospace; }
+.hbar .hfill{ width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
+.hbar .hd{ font-size: 9px; color: var(--ink-3); font-family: "IBM Plex Mono", monospace; white-space: nowrap; }
+.hist-cap{ font-size: 11.5px; color: var(--ink-3); margin: 8px 0 0; }
+
+.rural-row{
+  display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding: 6px; border-radius: 5px; background: none; border: 0; cursor: pointer; width: 100%; text-align: left;
 }
-.legend-foot{ margin-top: 8px; font-size: 11.5px; color: var(--ink-3); }
+.rural-row:hover{ background: var(--rule-soft); }
+.rural-row[aria-pressed="true"]{ background: var(--accent-soft); }
+.rural-row .nm{ font-size: 12.5px; }
+.rural-row .ct{ margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-2); }
+
+.extremes{ display: flex; flex-direction: column; gap: 1px; }
+.ex-head{ font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 6px 0 3px; }
+.ex{
+  display: grid; grid-template-columns: 11px 1fr auto; align-items: center; gap: 9px;
+  padding: 4px 6px; border-radius: 5px; background: none; border: 0; cursor: pointer;
+  width: 100%; text-align: left; font-size: 12.5px;
+}
+.ex:hover{ background: var(--rule-soft); }
+.ex .yrs{ font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ex .swx{ width: 11px; height: 11px; border-radius: 2px; border: 1px solid rgba(128,128,128,.4); }
 
 .dossier{ border-top: 1px solid var(--rule); padding-top: 16px; }
 .dossier[hidden]{ display: none !important; }
-.ds-name{
-  font-family: Archivo, sans-serif; font-size: 20px; font-weight: 700;
-  letter-spacing: -.02em; margin: 0 0 6px; text-wrap: balance;
+.ds-name{ font-family: Archivo, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance; }
+
+/* the life of one suburb, drawn against the same 1865-2025 axis as the scrubber */
+.ds-life{ margin: 4px 0 14px; }
+.ds-track{ position: relative; height: 26px; }
+.ds-rail{ position: absolute; left: 0; right: 0; top: 11px; height: 3px; border-radius: 2px; background: var(--rule); }
+.ds-win{ position: absolute; top: 7px; height: 11px; border-radius: 3px; border: 1px solid rgba(128,128,128,.35); }
+.ds-founded{ position: absolute; top: 4px; width: 1.5px; height: 17px; background: var(--ink-3); }
+.ds-founded::after{
+  content: attr(data-y); position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  font-family: "IBM Plex Mono", monospace; font-size: 9px; color: var(--ink-3);
 }
-.ds-era{ display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
-.ds-grid{
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
-  padding: 11px 0; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft);
-}
-.ds-grid dt{
-  font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--ink-3); margin-bottom: 1px;
-}
-.ds-grid dd{
-  margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 14px;
-  font-variant-numeric: tabular-nums; color: var(--ink);
-}
+.ds-ends{ display: flex; justify-content: space-between; font-family: "IBM Plex Mono", monospace; font-size: 9.5px; color: var(--ink-3); }
+
+.ds-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; padding: 12px 0; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); }
+.ds-grid dt{ font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 1px; }
+.ds-grid dd{ margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ds-grid dd small{ font-size: 11px; color: var(--ink-3); }
 .ds-note{ margin: 12px 0 0; font-size: 13px; color: var(--ink-2); }
+.ds-conf{ margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); }
 .ds-clear{ margin-top: 12px; }
 
 /* ---------------------------------------------------------------- table */
@@ -380,27 +281,23 @@ input[type=range]::-moz-range-thumb{
 .tablewrap[hidden]{ display: none !important; }
 table{ border-collapse: collapse; width: 100%; font-size: 13px; }
 caption{ text-align: left; color: var(--ink-2); padding: 14px 0 10px; font-size: 12.5px; }
-th, td{ text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+th, td{ text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
 thead th{
   position: sticky; top: 0; background: var(--surface);
   font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
-  font-weight: 600; padding-top: 10px; border-bottom: 1px solid var(--rule);
+  font-weight: 600; padding-top: 10px; border-bottom: 1px solid var(--rule); cursor: pointer; white-space: nowrap;
 }
+thead th:hover{ color: var(--ink); }
+thead th[aria-sort]{ color: var(--accent); }
 td.num{ font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.era-cell{ white-space: nowrap; }
-td.era-cell span{ display: inline-flex; align-items: center; gap: 6px; }
 td.nm{ font-weight: 500; white-space: nowrap; }
-td.note{ color: var(--ink-2); min-width: 22ch; }
+td.nm span{ display: inline-flex; align-items: center; gap: 7px; }
+td.note{ color: var(--ink-2); min-width: 24ch; }
+td.conf{ color: var(--ink-3); font-size: 12px; }
 
-.colophon{
-  padding: 14px 20px 20px;
-  border-top: 1px solid var(--rule);
-  background: var(--surface);
-  color: var(--ink-3);
-  font-size: 11.5px;
-}
+.colophon{ padding: 12px 20px 20px; border-top: 1px solid var(--rule); background: var(--surface); color: var(--ink-3); font-size: 11.5px; }
 .colophon a{ color: var(--ink-2); }
-.colophon p{ margin: 0 0 5px; max-width: 78ch; }
+.colophon p{ margin: 0 0 5px; max-width: 80ch; }
 .colophon summary{ cursor: pointer; color: var(--ink-2); font-weight: 500; }
 .colophon summary:hover{ color: var(--ink); }
 .colophon details[open] summary{ margin-bottom: 9px; }
@@ -412,10 +309,7 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   .body{ flex-direction: column; }
   .stage{ flex: none; }
   .canvas-wrap{ height: 62vh; min-height: 400px; flex: none; }
-  .rail{
-    flex: none; border-left: 0; border-top: 1px solid var(--rule);
-    max-height: none; overflow: visible;
-  }
+  .rail{ flex: none; border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
   .topbar{ padding: 12px 16px 10px; }
   .timeline{ padding: 10px 16px 12px; }
   .tablewrap{ padding: 0 16px 24px; overflow-x: auto; }
@@ -427,9 +321,9 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     <div style="flex:1 1 auto;min-width:0">
       <h1 class="wordmark">How the Gold Coast Grew</h1>
       <p class="standfirst">
-        All 79 gazetted localities in the City of Gold Coast, shaded by the era their
-        built form was actually created — from the 1865 river port at Nerang to the
-        estates still going up at Pimpama.
+        All 79 gazetted localities in the City of Gold Coast, each dated by when its
+        development actually began and how long it took to finish — Southport took a
+        century, Pacific Pines took eighteen years, and Pimpama is still going.
       </p>
     </div>
     <div class="topbar-tools">
@@ -442,7 +336,7 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   <div class="body" id="mapBody">
     <section class="stage">
       <div class="canvas-wrap" id="wrap">
-        <svg id="map" role="img" aria-label="Map of the City of Gold Coast with each locality shaded by its era of development. The same data is available in the Table view."></svg>
+        <svg id="map" role="img" aria-label="Map of the City of Gold Coast with each locality shaded by the year its development began. The same data is available in the Table view."></svg>
 
         <div class="map-overlay">
           <div class="zoomers">
@@ -458,12 +352,12 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
 
       <div class="timeline">
         <div class="tl-head">
-          <div class="tl-year" id="yearOut">2025</div>
+          <div class="tl-year mono" id="yearOut">2025</div>
           <button class="btn" id="play">▶ Play</button>
           <p class="tl-note" id="tlNote"></p>
         </div>
         <input type="range" id="year" min="1865" max="2025" step="1" value="2025"
-               aria-label="Year — drag to watch the city fill in">
+               aria-label="Year — drag to watch each suburb fill in across its build-out">
         <div class="ticks" id="ticks"></div>
       </div>
     </section>
@@ -476,19 +370,49 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
       </div>
 
       <div>
-        <h2>Era of development</h2>
-        <div class="legend" id="legend"></div>
-        <p class="legend-foot" id="legendFoot"></p>
+        <h2>Shade by <span class="hint" id="modeHint"></span></h2>
+        <div class="mode">
+          <button class="btn" id="modeStart" aria-pressed="true">Development began</button>
+          <button class="btn" id="modeMid" aria-pressed="false">Mid build-out</button>
+        </div>
+        <svg class="scale-bar" id="scaleSwatch" viewBox="0 0 100 11" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="scale-axis"><span class="mono">1865</span><span class="mono">1945</span><span class="mono">2025</span></div>
+
+        <div class="hist" id="hist" role="group" aria-label="Localities by decade development began"></div>
+        <p class="hist-cap" id="histCap"></p>
+
+        <button class="rural-row" id="ruralRow" aria-pressed="false">
+          <span class="dot" style="background:var(--rural)"></span>
+          <span class="nm">Never urbanised</span>
+          <span class="ct" id="ruralCt"></span>
+        </button>
+      </div>
+
+      <div>
+        <h2>How long they took</h2>
+        <div class="extremes" id="extremes"></div>
       </div>
 
       <div class="dossier" id="dossier" hidden>
         <h3 class="ds-name" id="dsName"></h3>
-        <div class="ds-era"><span class="dot" id="dsDot"></span><span id="dsEra"></span></div>
+        <div class="ds-life">
+          <div class="ds-track">
+            <div class="ds-rail"></div>
+            <div class="ds-founded" id="dsFounded"></div>
+            <div class="ds-win" id="dsWin"></div>
+          </div>
+          <div class="ds-ends"><span>1865</span><span>2025</span></div>
+        </div>
         <dl class="ds-grid">
           <div><dt>First settled</dt><dd id="dsSettled"></dd></div>
+          <div><dt>Development began</dt><dd id="dsStart"></dd></div>
+          <div><dt>Built out by</dt><dd id="dsEnd"></dd></div>
+          <div><dt>Took</dt><dd id="dsYears"></dd></div>
           <div><dt>Area</dt><dd id="dsArea"></dd></div>
+          <div><dt>Dating</dt><dd id="dsConfShort"></dd></div>
         </dl>
         <p class="ds-note" id="dsNote"></p>
+        <p class="ds-conf" id="dsConf"></p>
         <button class="btn ds-clear" id="dsClear">Clear selection</button>
       </div>
     </aside>
@@ -498,12 +422,15 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     <table>
       <caption id="tableCaption"></caption>
       <thead>
-        <tr>
-          <th scope="col">Locality</th>
-          <th scope="col">Era of development</th>
-          <th scope="col">First settled</th>
-          <th scope="col">Area km²</th>
-          <th scope="col">Notes</th>
+        <tr id="thead">
+          <th scope="col" data-k="name">Locality</th>
+          <th scope="col" data-k="founded">Settled</th>
+          <th scope="col" data-k="start">Began</th>
+          <th scope="col" data-k="end">Built out</th>
+          <th scope="col" data-k="years">Years</th>
+          <th scope="col" data-k="areaKm2">km²</th>
+          <th scope="col" data-k="confidence">Dating</th>
+          <th scope="col" data-k="note">Notes</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -513,13 +440,17 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   <footer class="colophon">
     <details>
       <summary>Sources &amp; method</summary>
-    <p><strong>Boundaries:</strong> Queensland gazetted localities (Queensland Government / Geoscape
-       administrative boundaries). <strong>Eras:</strong> compiled by hand from the published history of
-       each locality and held in <code>data/suburb-eras.csv</code> — an editorial judgement about when
-       each place took its present built form, not an official dataset. Suburbs rarely arrive in a single
-       decade, so a band marks the period that did most of the building.</p>
-    <p>“First settled” is the earliest European settlement or survey, which for the farming districts of
-       the north is often a century before anything suburban was built there.</p>
+      <p><strong>Boundaries:</strong> Queensland gazetted localities (Queensland Government /
+         Geoscape administrative boundaries). <strong>Dates:</strong> compiled by hand from the
+         published history of each locality and held in <code>data/suburb-development.csv</code>.
+         They are an editorial judgement, not an official dataset, and each row carries its own
+         confidence — hover the “Dating” note in a suburb’s panel.</p>
+      <p><strong>Development began</strong> is when the locality’s present urban fabric started
+         being laid out — a township survey for the old towns, a first estate for the new ones.
+         <strong>Built out by</strong> is when it was substantially complete. <strong>First
+         settled</strong> is the earliest European settlement or survey, which in the northern
+         farming districts is often a century earlier: Pimpama had sugar mills in the 1870s and
+         was still paddocks in 2005.</p>
     </details>
   </footer>
 </div>
@@ -532,30 +463,47 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   var DATA = window.GC_DATA;
   var feats = DATA.features;
   var META = DATA.meta;
-  var ERA_ORDER = META.eraOrder;
-  var ERA_LABEL = META.eraLabels;
-  var ERA_BLURB = META.eraBlurbs;
-  var ERA_START = META.eraStart;
+  var Y0 = META.yearMin, Y1 = META.yearMax;
 
-  var ERA_VAR = {
-    "pre1900": "--era-1", "1900-1945": "--era-2", "1946-1969": "--era-3",
-    "1970s": "--era-4", "1980s": "--era-5", "1990s-2000s": "--era-6",
-    "2010s+": "--era-7", "rural": "--era-r"
-  };
-  var eraColor = function (e) { return "var(" + ERA_VAR[e] + ")"; };
+  // The documented single-hue blue ramp, steps 100 (lightest) to 700 (darkest).
+  // A year is placed continuously along it rather than bucketed into bands.
+  var RAMP = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5",
+              "#2a78d6", "#256abf", "#1c5cab", "#184f95", "#104281", "#0d366b"];
 
-  // Milestones that actually set the pace of the city. They label the scrubber.
   var MILESTONES = [
     { y: 1865, t: "Nerang surveyed" },
     { y: 1900, t: "Southport at its peak" },
     { y: 1925, t: "Surfers Paradise Hotel" },
     { y: 1957, t: "First canal estate" },
     { y: 1980, t: "Robina launched" },
-    { y: 1996, t: "Robina Town Centre" },
     { y: 2018, t: "Coomera Town Centre" }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
+  var root = document.documentElement;
+
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  function mix(a, b, t) {
+    var pa = [parseInt(a.slice(1, 3), 16), parseInt(a.slice(3, 5), 16), parseInt(a.slice(5, 7), 16)];
+    var pb = [parseInt(b.slice(1, 3), 16), parseInt(b.slice(3, 5), 16), parseInt(b.slice(5, 7), 16)];
+    var c = pa.map(function (v, i) { return Math.round(v + (pb[i] - v) * t); });
+    return "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+  }
+
+  // year -> colour. Oldest sits furthest from the page surface in both themes:
+  // darkest on light, lightest on dark.
+  function colorForYear(year) {
+    var t = (year - Y0) / (Y1 - Y0);           // 0 = oldest, 1 = newest
+    var pos = isDark() ? t : (1 - t);          // 0 = lightest end of the ramp
+    var x = Math.max(0, Math.min(1, pos)) * (RAMP.length - 1);
+    var i = Math.min(RAMP.length - 2, Math.floor(x));
+    return mix(RAMP[i], RAMP[i + 1], x - i);
+  }
 
   /* ------------------------------------------------------------ projection */
   var lats = [], lons = [];
@@ -609,8 +557,6 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     var p = f.properties;
     var d = pathOf(f.geometry);
 
-    // A fat stroke behind every shape fuses into one soft outline for the whole
-    // city, which is what separates the coast from the water.
     var halo = document.createElementNS(NS, "path");
     halo.setAttribute("d", d);
     halo.setAttribute("class", "halo");
@@ -619,10 +565,10 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     var el = document.createElementNS(NS, "path");
     el.setAttribute("d", d);
     el.setAttribute("class", "sub");
-    el.style.setProperty("--fill", eraColor(p.era));
     el.dataset.i = i;
     var t = document.createElementNS(NS, "title");
-    t.textContent = p.name + " — " + p.eraLabel;
+    t.textContent = p.rural ? p.name + " — never urbanised"
+                            : p.name + " — developed " + p.start + "–" + (p.end || "now");
     el.appendChild(t);
     gSubs.appendChild(el);
 
@@ -633,7 +579,6 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     lb.textContent = p.name;
     gLbls.appendChild(lb);
 
-    // how big the suburb draws, used to decide when its label earns its place
     var xs = [], ys = [];
     eachRing(f.geometry, function (r) {
       for (var k = 0; k < r.length; k++) { xs.push(px(r[k][0])); ys.push(py(r[k][1])); }
@@ -641,30 +586,64 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     var w = Math.max.apply(null, xs) - Math.min.apply(null, xs);
     var h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
 
-    nodes.push({ f: f, p: p, el: el, halo: halo, lbl: lb, span: Math.min(w, h) });
+    nodes.push({ p: p, el: el, halo: halo, lbl: lb, span: Math.min(w, h) });
   });
 
   /* ------------------------------------------------------------ view state */
   var view = { k: 1, x: 0, y: 0 };
-  var selected = null, eraFilter = null, year = 2025;
+  var selected = null, decadeFilter = null, ruralFilter = false, year = Y1, shadeBy = "start";
 
-  // Screen pixels per viewBox unit. preserveAspectRatio="meet" fits by the
-  // smaller of the two ratios, so both the scale bar and the label type have to
-  // read it that way.
+  // How far through its build-out a suburb is at the chosen year: 0 before it
+  // started, 1 once it is finished. This is what makes a suburb fill in
+  // gradually instead of snapping on at a band boundary.
+  function progress(p, y) {
+    if (p.rural) return 1;
+    if (y < p.start) return 0;
+    var done = p.end === null ? Y1 : p.end;
+    if (y >= done) return 1;
+    return (y - p.start) / (done - p.start);
+  }
+
+  function fillFor(p) {
+    if (p.rural) return "var(--rural)";
+    return colorForYear(shadeBy === "mid" ? p.mid : p.start);
+  }
+
+  function isFiltered(p) {
+    if (ruralFilter) return !p.rural;
+    if (decadeFilter !== null) return p.rural || Math.floor(p.start / 10) * 10 !== decadeFilter;
+    return false;
+  }
+
+  function render() {
+    nodes.forEach(function (n) {
+      var pr = progress(n.p, year);
+      var muted = isFiltered(n.p);
+      n.el.style.fill = fillFor(n.p);
+      n.el.classList.toggle("is-unbuilt", pr <= 0);
+      n.el.classList.toggle("is-building", pr > 0 && pr < 1);
+      n.el.classList.toggle("is-muted", muted && pr > 0);
+      n.el.classList.toggle("is-selected", n === selected);
+      // part-built suburbs sit between the page and their finished colour
+      n.el.setAttribute("fill-opacity", pr <= 0 ? 0 : (0.22 + 0.78 * pr).toFixed(3));
+      n.halo.style.display = pr <= 0 ? "none" : "";
+    });
+    updateLabels();
+  }
+
+  /* ------------------------------------------------------------ transform */
   function pxPerUnit() {
     var r = svg.getBoundingClientRect();
     if (!r.width || !r.height) return 0;
     return Math.min(r.width / VW, r.height / VH) * view.k;
   }
-
-  var KM_PER_UNIT = 110.574 / SCALE;   // one viewBox unit, in kilometres
+  var KM_PER_UNIT = 110.574 / SCALE;
 
   function applyTransform() {
     gRoot.setAttribute("transform",
       "translate(" + view.x.toFixed(2) + " " + view.y.toFixed(2) + ") scale(" + view.k.toFixed(4) + ")");
     var ppu = pxPerUnit();
     if (ppu > 0) {
-      // hold label type at a constant size on screen, whatever the zoom
       gLbls.style.setProperty("font-size", (10.5 / ppu).toFixed(3) + "px");
       gLbls.querySelectorAll("text").forEach(function (t) {
         t.style.strokeWidth = (3 / ppu).toFixed(3) + "px";
@@ -678,26 +657,19 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     var ppu = pxPerUnit();
     if (!ppu) return;
     var fontUnits = 10.5 / ppu;
-
     var wanted = [];
     nodes.forEach(function (n) {
-      // a suburb has to draw wide enough on screen to carry its own name
       var show = (n.span * ppu >= 38) || n === selected;
-      if (eraFilter && n.p.era !== eraFilter) show = false;
-      if (isPending(n)) show = false;
+      if (isFiltered(n.p)) show = false;
+      if (progress(n.p, year) <= 0) show = false;
       n.lbl.style.display = "none";
       if (show) wanted.push(n);
     });
-
-    // Biggest suburbs claim their label first; a smaller neighbour gives way
-    // rather than printing one name across another. The selected suburb always
-    // keeps its name.
     wanted.sort(function (a, b) {
       if (a === selected) return -1;
       if (b === selected) return 1;
       return b.span - a.span;
     });
-
     var placed = [];
     wanted.forEach(function (n) {
       var w = n.p.name.length * fontUnits * 0.55;
@@ -726,37 +698,18 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     $("scaleTxt").textContent = best + " km";
   }
 
-  function isPending(n) {
-    var s = ERA_START[n.p.era];
-    return s !== null && s !== undefined && s > year;
-  }
-
-  function render() {
-    nodes.forEach(function (n) {
-      var pending = isPending(n);
-      var muted = !!eraFilter && n.p.era !== eraFilter;
-      n.el.classList.toggle("is-pending", pending);
-      n.el.classList.toggle("is-muted", muted && !pending);
-      n.el.classList.toggle("is-selected", n === selected);
-      n.halo.style.display = pending ? "none" : "";
-    });
-    updateLabels();
-  }
-
   /* ------------------------------------------------------------ pan & zoom */
   var wrap = $("wrap");
-
   function clampView() {
     var maxPan = Math.max(VW, VH) * view.k;
     view.x = Math.min(maxPan, Math.max(-maxPan, view.x));
     view.y = Math.min(maxPan, Math.max(-maxPan, view.y));
   }
-
   function zoomAt(cx, cy, factor) {
     var k2 = Math.min(14, Math.max(1, view.k * factor));
     if (k2 === view.k) return;
     var r = svg.getBoundingClientRect();
-    var sx = VW / r.width, sy = VH / r.height, s = Math.max(sx, sy);
+    var s = Math.max(VW / r.width, VH / r.height);
     var ux = (cx - r.left - r.width / 2) * s + VW / 2;
     var uy = (cy - r.top - r.height / 2) * s + VH / 2;
     view.x = ux - (ux - view.x) * (k2 / view.k);
@@ -764,7 +717,6 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     view.k = k2;
     clampView(); applyTransform();
   }
-
   wrap.addEventListener("wheel", function (e) {
     e.preventDefault();
     zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
@@ -776,25 +728,19 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     if (pointers.size === 2) {
       var p = Array.from(pointers.values());
       pinch = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) };
-      drag = null;
-      return;
+      drag = null; return;
     }
     drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false };
     svg.classList.add("dragging");
     wrap.setPointerCapture(e.pointerId);
   });
-
   wrap.addEventListener("pointermove", function (e) {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
     if (pinch && pointers.size === 2) {
       var p = Array.from(pointers.values());
       var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-      if (pinch.d > 0) {
-        zoomAt((p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2, d / pinch.d);
-      }
-      pinch.d = d;
-      return;
+      if (pinch.d > 0) zoomAt((p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2, d / pinch.d);
+      pinch.d = d; return;
     }
     if (!drag) return;
     var r = svg.getBoundingClientRect();
@@ -804,7 +750,6 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     view.x = drag.vx + dx; view.y = drag.vy + dy;
     clampView(); applyTransform();
   });
-
   function endPointer(e) {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
@@ -819,16 +764,24 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
 
   /* ------------------------------------------------------------ tooltip */
   var tip = $("tip");
+  function lifeLine(p) {
+    if (p.rural) return "Never urbanised";
+    return "Developed " + p.start + "–" + (p.end === null ? "now" : p.end) +
+           "  ·  " + p.years + " yr" + (p.ongoing ? " so far" : "");
+  }
   function showTip(n, clientX, clientY) {
-    tip.innerHTML =
-      "<b></b><div class='tip-era'><span class='dot'></span><span></span></div>" +
-      "<div class='tip-meta'></div>";
-    tip.querySelector("b").textContent = n.p.name;
-    tip.querySelector(".dot").style.background = eraColor(n.p.era);
-    tip.querySelector(".tip-era span:last-child").textContent =
-      isPending(n) ? "not yet built in " + year : n.p.eraLabel;
-    tip.querySelector(".tip-meta").textContent =
-      "settled " + n.p.settled + "  ·  " + n.p.areaKm2.toFixed(1) + " km²";
+    var p = n.p, pr = progress(p, year);
+    tip.innerHTML = "<b></b><div class='row'><span class='dot'></span><span class='ln'></span></div>" +
+                    "<div class='meta'></div>";
+    tip.querySelector("b").textContent = p.name;
+    tip.querySelector(".dot").style.background = fillFor(p);
+    tip.querySelector(".ln").textContent = lifeLine(p);
+    var meta;
+    if (p.rural) meta = "settled " + p.founded + "  ·  " + p.areaKm2.toFixed(1) + " km²";
+    else if (pr <= 0) meta = "not started in " + year + "  ·  begins " + p.start;
+    else if (pr < 1) meta = Math.round(pr * 100) + "% built by " + year + "  ·  settled " + p.founded;
+    else meta = "settled " + p.founded + "  ·  " + p.areaKm2.toFixed(1) + " km²";
+    tip.querySelector(".meta").textContent = meta;
     tip.hidden = false;
     var wr = wrap.getBoundingClientRect();
     var x = clientX - wr.left + 14, y = clientY - wr.top + 14;
@@ -838,7 +791,6 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     tip.style.left = Math.max(6, x) + "px";
     tip.style.top = Math.max(6, y) + "px";
   }
-
   gSubs.addEventListener("pointermove", function (e) {
     if (drag && drag.moved) { tip.hidden = true; return; }
     var t = e.target.closest(".sub");
@@ -846,83 +798,192 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
     showTip(nodes[+t.dataset.i], e.clientX, e.clientY);
   });
   gSubs.addEventListener("pointerleave", function () { tip.hidden = true; });
-
   gSubs.addEventListener("click", function (e) {
     if (drag && drag.moved) return;
     var t = e.target.closest(".sub");
-    if (!t) return;
-    select(nodes[+t.dataset.i]);
+    if (t) select(nodes[+t.dataset.i]);
   });
 
   /* ------------------------------------------------------------ dossier */
+  var CONF = META.confidence;
+  function pct(y) { return ((y - Y0) / (Y1 - Y0) * 100); }
+
   function select(n) {
     selected = n;
     if (!n) { $("dossier").hidden = true; render(); return; }
-    $("dsName").textContent = n.p.name;
-    $("dsDot").style.background = eraColor(n.p.era);
-    $("dsEra").textContent = n.p.eraLabel + " — " + ERA_BLURB[n.p.era].replace(/\.$/, "");
-    $("dsSettled").textContent = n.p.settled;
-    $("dsArea").textContent = n.p.areaKm2.toFixed(1) + " km²";
-    $("dsNote").textContent = n.p.note;
+    var p = n.p;
+    $("dsName").textContent = p.name;
+
+    var win = $("dsWin"), fnd = $("dsFounded");
+    if (p.rural) {
+      win.style.display = "none";
+    } else {
+      win.style.display = "";
+      var a = pct(p.start), b = pct(p.end === null ? Y1 : p.end);
+      win.style.left = a.toFixed(2) + "%";
+      win.style.width = Math.max(1.2, b - a).toFixed(2) + "%";
+      win.style.background = fillFor(p);
+    }
+    // only worth marking when settlement long predates development - that gap is
+    // the whole point for the northern farming districts
+    var showFounded = p.rural || p.founded < p.start - 4;
+    fnd.style.display = showFounded ? "" : "none";
+    fnd.style.left = pct(p.founded).toFixed(2) + "%";
+    fnd.dataset.y = p.founded;
+
+    $("dsSettled").textContent = p.founded;
+    $("dsStart").innerHTML = p.rural ? "—" : p.start;
+    $("dsEnd").innerHTML = p.rural ? "—" : (p.end === null ? "<small>still building</small>" : p.end);
+    $("dsYears").innerHTML = p.rural ? "—" : p.years + (p.ongoing ? " <small>so far</small>" : " <small>yr</small>");
+    $("dsArea").innerHTML = p.areaKm2.toFixed(1) + " <small>km²</small>";
+    $("dsConfShort").textContent = p.confidence;
+    $("dsNote").textContent = p.note;
+    $("dsConf").textContent = CONF[p.confidence];
     $("dossier").hidden = false;
     render();
   }
   $("dsClear").onclick = function () { select(null); };
 
-  /* ------------------------------------------------------------ legend */
-  var counts = {};
-  feats.forEach(function (f) { counts[f.properties.era] = (counts[f.properties.era] || 0) + 1; });
-  var maxCount = Math.max.apply(null, ERA_ORDER.map(function (e) { return counts[e] || 0; }));
+  /* ------------------------------------------------------------ scale + histogram */
+  var urban = feats.filter(function (f) { return !f.properties.rural; });
+  var ruralN = feats.length - urban.length;
+  $("ruralCt").textContent = ruralN;
 
-  var legend = $("legend");
-  ERA_ORDER.forEach(function (e) {
+  function paintScaleSwatch() {
+    var sw = $("scaleSwatch");
+    sw.innerHTML = "";
+    var defs = document.createElementNS(NS, "defs");
+    var lg = document.createElementNS(NS, "linearGradient");
+    lg.setAttribute("id", "yearGrad");
+    lg.setAttribute("x1", "0"); lg.setAttribute("x2", "1");
+    for (var i = 0; i <= 20; i++) {
+      var st = document.createElementNS(NS, "stop");
+      st.setAttribute("offset", (i / 20 * 100) + "%");
+      st.setAttribute("stop-color", colorForYear(Y0 + (Y1 - Y0) * i / 20));
+      lg.appendChild(st);
+    }
+    defs.appendChild(lg); sw.appendChild(defs);
+    var r = document.createElementNS(NS, "rect");
+    r.setAttribute("width", "100"); r.setAttribute("height", "11");
+    r.setAttribute("fill", "url(#yearGrad)");
+    sw.appendChild(r);
+  }
+
+  var decades = {};
+  urban.forEach(function (f) {
+    var d = Math.floor(f.properties.start / 10) * 10;
+    decades[d] = (decades[d] || 0) + 1;
+  });
+  var decadeKeys = [];
+  for (var d = 1860; d <= 2010; d += 10) decadeKeys.push(d);
+  var maxD = Math.max.apply(null, decadeKeys.map(function (k) { return decades[k] || 0; }));
+
+  var hist = $("hist");
+  decadeKeys.forEach(function (k) {
+    var n = decades[k] || 0;
     var b = document.createElement("button");
-    b.className = "lg";
+    b.className = "hbar";
     b.setAttribute("aria-pressed", "false");
-    b.innerHTML =
-      '<span class="sw"></span>' +
-      '<span><span class="nm"></span><span class="bar"></span></span>' +
-      '<span class="ct"></span>';
-    b.querySelector(".sw").style.background = eraColor(e);
-    b.querySelector(".nm").textContent = ERA_LABEL[e];
-    var bar = b.querySelector(".bar");
-    bar.style.background = eraColor(e);
-    bar.style.width = ((counts[e] || 0) / maxCount * 100).toFixed(1) + "%";
-    b.querySelector(".ct").textContent = counts[e] || 0;
-    b.title = ERA_BLURB[e];
+    b.title = n + " localit" + (n === 1 ? "y" : "ies") + " began development in the " + k + "s";
+    b.innerHTML = '<span class="hn"></span><span class="hfill"></span><span class="hd"></span>';
+    b.querySelector(".hn").textContent = n || "";
+    // label sparsely with the full year; every bar carries its decade in the tooltip
+    b.querySelector(".hd").textContent = (k - 1860) % 40 === 0 ? String(k) : "";
+    var fill = b.querySelector(".hfill");
+    fill.style.height = (n ? 6 + (n / maxD) * 32 : 2) + "px";
+    fill.dataset.decade = k;
     b.onclick = function () {
-      eraFilter = (eraFilter === e) ? null : e;
-      legend.querySelectorAll(".lg").forEach(function (x, i) {
-        x.setAttribute("aria-pressed", ERA_ORDER[i] === eraFilter ? "true" : "false");
-      });
-      render();
+      decadeFilter = (decadeFilter === k) ? null : k;
+      if (decadeFilter !== null) ruralFilter = false;
+      syncFilters();
     };
-    legend.appendChild(b);
+    hist.appendChild(b);
   });
 
-  var urban = feats.filter(function (f) { return f.properties.era !== "rural"; }).length;
-  var ruralArea = feats.reduce(function (a, f) {
-    return a + (f.properties.era === "rural" ? f.properties.areaKm2 : 0);
-  }, 0);
-  var totalArea = feats.reduce(function (a, f) { return a + f.properties.areaKm2; }, 0);
-  $("legendFoot").textContent =
-    "Bars show how many localities fall in each band. " + urban + " of " + feats.length +
-    " have been built out; the other " + (feats.length - urban) + " are still farm, forest or " +
-    "national park — " + Math.round(ruralArea / totalArea * 100) + "% of the city's land area.";
+  function paintHistogram() {
+    hist.querySelectorAll(".hfill").forEach(function (f) {
+      var k = +f.dataset.decade;
+      f.style.background = (decades[k] || 0) ? colorForYear(k + 5) : "var(--rule)";
+    });
+  }
+
+  function syncFilters() {
+    hist.querySelectorAll(".hbar").forEach(function (b, i) {
+      b.setAttribute("aria-pressed", decadeKeys[i] === decadeFilter ? "true" : "false");
+    });
+    $("ruralRow").setAttribute("aria-pressed", ruralFilter ? "true" : "false");
+    render();
+  }
+  $("ruralRow").onclick = function () {
+    ruralFilter = !ruralFilter;
+    if (ruralFilter) decadeFilter = null;
+    syncFilters();
+  };
+
+  var spans = urban.map(function (f) { return f.properties.years; }).sort(function (a, b) { return a - b; });
+  var medianSpan = spans[Math.floor(spans.length / 2)];
+  $("histCap").textContent =
+    "Localities by the decade their development began. " + urban.length + " of " + feats.length +
+    " have been built out, and the median one took " + medianSpan + " years from first estate to finished.";
+
+  // the extremes of build-out length, which is the figure the dated data adds
+  var byLength = urban.slice().sort(function (a, b) { return a.properties.years - b.properties.years; });
+  function buildExtremes() {
+    var box = $("extremes");
+    box.innerHTML = "";
+    [["Quickest", byLength.slice(0, 3)],
+     ["Slowest", byLength.slice(-3).reverse()]].forEach(function (pair) {
+      var h = document.createElement("div");
+      h.className = "ex-head";
+      h.textContent = pair[0];
+      box.appendChild(h);
+      pair[1].forEach(function (f) {
+        var p = f.properties;
+        var b = document.createElement("button");
+        b.className = "ex";
+        b.innerHTML = '<span class="swx"></span><span class="nmx"></span><span class="yrs"></span>';
+        b.querySelector(".swx").style.background = fillFor(p);
+        b.querySelector(".nmx").textContent = p.name;
+        b.querySelector(".yrs").textContent = p.years + " yr" + (p.ongoing ? "+" : "");
+        b.title = p.start + "–" + (p.end === null ? "now" : p.end);
+        b.onclick = function () {
+          var hit = nodes.find(function (n) { return n.p.name === p.name; });
+          if (hit) select(hit);
+        };
+        box.appendChild(b);
+      });
+    });
+  }
+
+  $("modeStart").onclick = function () { setShade("start"); };
+  $("modeMid").onclick = function () { setShade("mid"); };
+  function setShade(m) {
+    shadeBy = m;
+    $("modeStart").setAttribute("aria-pressed", String(m === "start"));
+    $("modeMid").setAttribute("aria-pressed", String(m === "mid"));
+    $("modeHint").textContent = m === "start" ? "— the year the first estate was laid out"
+                                              : "— the midpoint of the build-out";
+    if (selected) select(selected);
+    render();
+  }
 
   /* ------------------------------------------------------------ timeline */
   var yearIn = $("year"), yearOut = $("yearOut"), tlNote = $("tlNote");
-
   function setYear(y) {
     year = +y;
     yearOut.textContent = year;
-    var built = nodes.filter(function (n) { return !isPending(n) && n.p.era !== "rural"; }).length;
+    var done = 0, building = 0;
+    urban.forEach(function (f) {
+      var pr = progress(f.properties, year);
+      if (pr >= 1) done++; else if (pr > 0) building++;
+    });
     var ms = null;
     for (var i = 0; i < MILESTONES.length; i++) if (MILESTONES[i].y <= year) ms = MILESTONES[i];
-    tlNote.innerHTML = "<b>" + built + "</b> of " + urban + " urban localities established" +
-      (ms ? " · latest milestone: " + ms.t + " (" + ms.y + ")" : "");
+    tlNote.innerHTML = "<b>" + done + "</b> built out" +
+      (building ? ", <span class='building'>" + building + "</span> under way" : "") +
+      " of " + urban.length + (ms ? " · " + ms.t + " (" + ms.y + ")" : "");
     render();
-    if (!tip.hidden) tip.hidden = true;
+    tip.hidden = true;
   }
   yearIn.addEventListener("input", function () { stopPlay(); setYear(this.value); });
 
@@ -930,8 +991,7 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   MILESTONES.forEach(function (m, i) {
     var d = document.createElement("div");
     d.className = "tick";
-    d.style.left = ((m.y - 1865) / (2025 - 1865) * 100).toFixed(2) + "%";
-    // the end ticks anchor to their own edge so their captions stay on the track
+    d.style.left = ((m.y - Y0) / (Y1 - Y0) * 100).toFixed(2) + "%";
     if (i === 0) { d.style.transform = "none"; d.style.alignItems = "flex-start"; }
     else if (i === MILESTONES.length - 1) { d.style.transform = "translateX(-100%)"; d.style.alignItems = "flex-end"; }
     d.innerHTML = "<span></span><em></em>";
@@ -941,19 +1001,17 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
   });
 
   var timer = null;
-  function stopPlay() {
-    if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; }
-  }
+  function stopPlay() { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; } }
   $("play").onclick = function () {
     if (timer) { stopPlay(); return; }
-    if (year >= 2025) { year = 1865; yearIn.value = 1865; setYear(1865); }
+    if (year >= Y1) { year = Y0; yearIn.value = Y0; setYear(Y0); }
     this.textContent = "❚❚ Pause";
     timer = setInterval(function () {
-      var next = year + 2;
-      if (next >= 2025) { next = 2025; stopPlay(); }
+      var next = year + 1;
+      if (next >= Y1) { next = Y1; stopPlay(); }
       yearIn.value = next;
       setYear(next);
-    }, 90);
+    }, 55);
   };
 
   /* ------------------------------------------------------------ search */
@@ -967,53 +1025,87 @@ td.note{ color: var(--ink-2); min-width: 22ch; }
 
   /* ------------------------------------------------------------ table */
   var tbody = $("tbody");
-  feats.slice().sort(function (a, b) {
-    return a.properties.name.localeCompare(b.properties.name);
-  }).forEach(function (f) {
-    var p = f.properties;
-    var tr = document.createElement("tr");
-    tr.innerHTML = '<td class="nm"></td><td class="era-cell"><span><i class="dot"></i><b></b></span></td>' +
-                   '<td class="num"></td><td class="num"></td><td class="note"></td>';
-    tr.querySelector(".nm").textContent = p.name;
-    tr.querySelector(".dot").style.background = eraColor(p.era);
-    tr.querySelector(".era-cell b").textContent = p.eraLabel;
-    tr.querySelector(".era-cell b").style.fontWeight = "400";
-    tr.children[2].textContent = p.settled;
-    tr.children[3].textContent = p.areaKm2.toFixed(1);
-    tr.children[4].textContent = p.note;
-    tbody.appendChild(tr);
+  var sortKey = "start", sortDir = 1;
+
+  function drawTable() {
+    var rows = feats.slice().sort(function (a, b) {
+      var A = a.properties[sortKey], B = b.properties[sortKey];
+      if (A === null || A === undefined) A = sortDir > 0 ? Infinity : -Infinity;
+      if (B === null || B === undefined) B = sortDir > 0 ? Infinity : -Infinity;
+      if (typeof A === "string") return sortDir * A.localeCompare(B);
+      return sortDir * (A - B);
+    });
+    tbody.innerHTML = "";
+    rows.forEach(function (f) {
+      var p = f.properties;
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td class="nm"><span><i class="dot"></i><b></b></span></td>' +
+        '<td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td>' +
+        '<td class="num"></td><td class="conf"></td><td class="note"></td>';
+      tr.querySelector(".dot").style.background = fillFor(p);
+      tr.querySelector(".nm b").textContent = p.name;
+      tr.querySelector(".nm b").style.fontWeight = "500";
+      tr.children[1].textContent = p.founded;
+      tr.children[2].textContent = p.rural ? "—" : p.start;
+      tr.children[3].textContent = p.rural ? "—" : (p.end === null ? "building" : p.end);
+      tr.children[4].textContent = p.rural ? "—" : p.years;
+      tr.children[5].textContent = p.areaKm2.toFixed(1);
+      tr.children[6].textContent = p.confidence;
+      tr.children[7].textContent = p.note;
+      tbody.appendChild(tr);
+    });
+    $("thead").querySelectorAll("th").forEach(function (th) {
+      if (th.dataset.k === sortKey) th.setAttribute("aria-sort", sortDir > 0 ? "ascending" : "descending");
+      else th.removeAttribute("aria-sort");
+    });
+  }
+  $("thead").addEventListener("click", function (e) {
+    var th = e.target.closest("th");
+    if (!th) return;
+    if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = 1; }
+    drawTable();
   });
   $("tableCaption").textContent =
-    feats.length + " gazetted localities of the City of Gold Coast, with the era each was built out. " +
-    "Same data as the map.";
+    feats.length + " gazetted localities of the City of Gold Coast, with the years each was " +
+    "settled, started and finished. Same data as the map — click a heading to sort.";
 
   function setView(isTable) {
     $("tableWrap").hidden = !isTable;
     $("mapBody").hidden = isTable;
     $("viewMap").setAttribute("aria-pressed", String(!isTable));
     $("viewTable").setAttribute("aria-pressed", String(isTable));
-    if (!isTable) requestAnimationFrame(applyTransform);
+    if (isTable) drawTable(); else requestAnimationFrame(applyTransform);
   }
   $("viewMap").onclick = function () { setView(false); };
   $("viewTable").onclick = function () { setView(true); };
 
   /* ------------------------------------------------------------ theme */
-  var root = document.documentElement;
+  function repaintTheme() {
+    paintScaleSwatch(); paintHistogram(); buildExtremes(); render();
+    if (selected) select(selected);
+    if (!$("tableWrap").hidden) drawTable();
+  }
   $("theme").onclick = function () {
-    var now = root.getAttribute("data-theme");
-    var dark = now ? now === "dark"
-                   : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var dark = isDark();
     root.setAttribute("data-theme", dark ? "light" : "dark");
     try { localStorage.setItem("gc-theme", dark ? "light" : "dark"); } catch (err) { /* private mode */ }
+    repaintTheme();
   };
   try {
     var saved = localStorage.getItem("gc-theme");
     if (saved) root.setAttribute("data-theme", saved);
   } catch (err) { /* private mode */ }
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+    if (!root.getAttribute("data-theme")) repaintTheme();
+  });
 
   /* ------------------------------------------------------------ go */
   window.addEventListener("resize", updateScale);
-  setYear(2025);
+  setShade("start");
+  paintScaleSwatch();
+  paintHistogram();
+  buildExtremes();
+  setYear(Y1);
   applyTransform();
 })();
 </script>
